@@ -29,6 +29,7 @@ func TestAccNetboxDevicesDataSource_basic(t *testing.T) {
 					resource.TestCheckResourceAttr("data.netbox_devices.test", "devices.0.comments", "this is also a comment"),
 					resource.TestCheckResourceAttrPair("data.netbox_devices.test", "devices.0.tenant_id", "netbox_tenant.test", "id"),
 					resource.TestCheckResourceAttrPair("data.netbox_devices.test", "devices.0.role_id", "netbox_device_role.test", "id"),
+					resource.TestCheckResourceAttrPair("data.netbox_devices.test", "devices.0.tags.0.id", "netbox_tag.test", "id"),
 					resource.TestCheckResourceAttrPair("data.netbox_devices.test", "devices.0.device_type_id", "netbox_device_type.test", "id"),
 					resource.TestCheckResourceAttrPair("data.netbox_devices.test", "devices.0.site_id", "netbox_site.test", "id"),
 					resource.TestCheckResourceAttrPair("data.netbox_devices.test", "devices.0.location_id", "netbox_location.test", "id"),
@@ -51,6 +52,17 @@ func TestAccNetboxDevicesDataSource_basic(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("data.netbox_devices.test", "devices.#", "4"),
 					resource.TestCheckResourceAttrPair("data.netbox_devices.test", "devices.1.role_id", "netbox_device_role.test", "id"),
+					resource.TestCheckResourceAttrPair("data.netbox_devices.test", "devices.0.name", "netbox_device.test0", "name"),
+					resource.TestCheckResourceAttrPair("data.netbox_devices.test", "devices.1.name", "netbox_device.test1", "name"),
+					resource.TestCheckResourceAttrPair("data.netbox_devices.test", "devices.2.name", "netbox_device.test2", "name"),
+					resource.TestCheckResourceAttrPair("data.netbox_devices.test", "devices.3.name", "netbox_device.test3", "name"),
+				),
+			},
+			{
+				Config: dependencies + testAccNetboxDeviceDataSourceFilterTag,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("data.netbox_devices.test", "devices.#", "4"),
+					resource.TestCheckResourceAttrPair("data.netbox_devices.test", "devices.1.tags.0.id", "netbox_tag.test", "id"),
 					resource.TestCheckResourceAttrPair("data.netbox_devices.test", "devices.0.name", "netbox_device.test0", "name"),
 					resource.TestCheckResourceAttrPair("data.netbox_devices.test", "devices.1.name", "netbox_device.test1", "name"),
 					resource.TestCheckResourceAttrPair("data.netbox_devices.test", "devices.2.name", "netbox_device.test2", "name"),
@@ -87,6 +99,7 @@ resource "netbox_device" "test0" {
   site_id = netbox_site.test.id
   location_id = netbox_location.test.id
   serial = "ABCDEF0"
+  tags = ["%[1]s_tag"]
 }
 
 resource "netbox_device" "test1" {
@@ -98,6 +111,7 @@ resource "netbox_device" "test1" {
   site_id = netbox_site.test.id
   location_id = netbox_location.test.id
   serial = "ABCDEF1"
+  tags = ["%[1]s_tag"]
 }
 
 resource "netbox_device" "test2" {
@@ -109,6 +123,7 @@ resource "netbox_device" "test2" {
   site_id = netbox_site.test.id
   location_id = netbox_location.test.id
   serial = "ABCDEF2"
+  tags = ["%[1]s_tag"]
 }
 
 resource "netbox_device" "test3" {
@@ -120,6 +135,11 @@ resource "netbox_device" "test3" {
   site_id = netbox_site.test.id
   location_id = netbox_location.test.id
   serial = "ABCDEF3"
+  tags = ["%[1]s_tag"]
+}
+
+resource "netbox_tag" "test" {
+  name = "%[1]s_tag"
 }
 `, testName)
 }
@@ -147,6 +167,14 @@ data "netbox_devices" "test" {
   filter {
     name  = "role_id"
     value = netbox_device_role.test.id
+  }
+}`
+
+const testAccNetboxDeviceDataSourceFilterTag = `
+data "netbox_devices" "test" {
+  filter {
+    name  = "tag_name"
+    value = netbox_tag.test.name
   }
 }`
 

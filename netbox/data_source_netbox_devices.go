@@ -110,6 +110,30 @@ func dataSourceNetboxDevices() *schema.Resource {
 							Type:     schema.TypeString,
 							Computed: true,
 						},
+						"tags": {
+							Type:     schema.TypeList,
+							Computed: true,
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"id": {
+										Type:     schema.TypeInt,
+										Computed: true,
+									},
+									"name": {
+										Type:     schema.TypeString,
+										Computed: true,
+									},
+									"slug": {
+										Type:     schema.TypeString,
+										Computed: true,
+									},
+									"description": {
+										Type:     schema.TypeString,
+										Computed: true,
+									},
+								},
+							},
+						},
 					},
 				},
 			},
@@ -127,28 +151,24 @@ func dataSourceNetboxDevicesRead(d *schema.ResourceData, m interface{}) error {
 		for _, f := range filterParams.List() {
 			k := f.(map[string]interface{})["name"]
 			v := f.(map[string]interface{})["value"]
+			vString := v.(string)
 			switch k {
 			case "asset_tag":
-				var assetTagString = v.(string)
-				params.AssetTag = &assetTagString
+				params.AssetTag = &vString
 			case "cluster_id":
-				var clusterString = v.(string)
-				params.ClusterID = &clusterString
+				params.ClusterID = &vString
 			case "name":
-				var nameString = v.(string)
-				params.Name = &nameString
+				params.Name = &vString
 			case "region":
-				var regionString = v.(string)
-				params.Region = &regionString
+				params.Region = &vString
 			case "role_id":
-				var roleIdString = v.(string)
-				params.RoleID = &roleIdString
+				params.RoleID = &vString
 			case "site_id":
-				var siteIdString = v.(string)
-				params.SiteID = &siteIdString
+				params.SiteID = &vString
 			case "tenant_id":
-				var tenantIdString = v.(string)
-				params.TenantID = &tenantIdString
+				params.TenantID = &vString
+			case "tag_name":
+				params.Tag = &vString
 			default:
 				return fmt.Errorf("'%s' is not a supported filter parameter", k)
 			}
@@ -222,6 +242,9 @@ func dataSourceNetboxDevicesRead(d *schema.ResourceData, m interface{}) error {
 		}
 		if device.Status != nil {
 			mapping["status"] = *device.Status.Value
+		}
+		if len(device.Tags) > 0 {
+			mapping["tags"] = flattenTagAttributes(device.Tags)
 		}
 		s = append(s, mapping)
 	}

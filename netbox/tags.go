@@ -75,3 +75,17 @@ func getTagListFromNestedTagList(nestedTags []*models.NestedTag) []string {
 	}
 	return tags
 }
+
+func flattenTagAttributes(tags []*models.NestedTag) []map[string]interface{} {
+	var mappedTags []map[string]interface{}
+	for _, tag := range tags {
+		t := *tag
+		mappedTag := map[string]interface{}{
+			"id":   t.ID,
+			"name": *t.Name,
+			"slug": *t.Slug,
+		}
+		mappedTags = append(mappedTags, mappedTag)
+	}
+	return mappedTags
+}
