@@ -2,7 +2,6 @@ package netbox
 
 import (
 	"fmt"
-
 	"github.com/fbreckle/go-netbox/netbox/client"
 	"github.com/fbreckle/go-netbox/netbox/client/extras"
 	"github.com/fbreckle/go-netbox/netbox/models"
@@ -11,6 +10,8 @@ import (
 )
 
 const tagsKey = "tags"
+const tagsIds = "tag_ids"
+const tagsNames = "tag_names"
 
 var tagsSchema = &schema.Schema{
 	Type: schema.TypeSet,
@@ -29,12 +30,27 @@ var tagsSchemaRead = &schema.Schema{
 	Computed: true,
 	Set:      schema.HashString,
 }
+var tagIdsSchemaRead = &schema.Schema{
+	Type:     schema.TypeList,
+	Computed: true,
+	Elem: &schema.Schema{
+		Type: schema.TypeInt,
+	},
+}
+
+var tagNamesSchemaRead = &schema.Schema{
+	Type:     schema.TypeList,
+	Computed: true,
+	Elem: &schema.Schema{
+		Type: schema.TypeString,
+	},
+}
 
 func getNestedTagListFromResourceDataSet(client *client.NetBoxAPI, d interface{}) ([]*models.NestedTag, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	tagList := d.(*schema.Set).List()
-	tags := []*models.NestedTag{}
+	var tags []*models.NestedTag
 	for _, tag := range tagList {
 
 		tagString := tag.(string)
@@ -69,23 +85,17 @@ func getNestedTagListFromResourceDataSet(client *client.NetBoxAPI, d interface{}
 }
 
 func getTagListFromNestedTagList(nestedTags []*models.NestedTag) []string {
-	tags := []string{}
+	var tagNames []string
 	for _, nestedTag := range nestedTags {
-		tags = append(tags, *nestedTag.Name)
+		tagNames = append(tagNames, *nestedTag.Name)
 	}
-	return tags
+	return tagNames
 }
 
-func flattenTagAttributes(tags []*models.NestedTag) []map[string]interface{} {
-	var mappedTags []map[string]interface{}
-	for _, tag := range tags {
-		t := *tag
-		mappedTag := map[string]interface{}{
-			"id":   t.ID,
-			"name": *t.Name,
-			"slug": *t.Slug,
-		}
-		mappedTags = append(mappedTags, mappedTag)
+func getTagIdsListFromNestedTagList(nestedTags []*models.NestedTag) []int64 {
+	var tagIds []int64
+	for _, nestedTag := range nestedTags {
+		tagIds = append(tagIds, nestedTag.ID)
 	}
-	return mappedTags
+	return tagIds
 }

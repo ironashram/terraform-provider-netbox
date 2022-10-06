@@ -110,30 +110,8 @@ func dataSourceNetboxDevices() *schema.Resource {
 							Type:     schema.TypeString,
 							Computed: true,
 						},
-						"tags": {
-							Type:     schema.TypeList,
-							Computed: true,
-							Elem: &schema.Resource{
-								Schema: map[string]*schema.Schema{
-									"id": {
-										Type:     schema.TypeInt,
-										Computed: true,
-									},
-									"name": {
-										Type:     schema.TypeString,
-										Computed: true,
-									},
-									"slug": {
-										Type:     schema.TypeString,
-										Computed: true,
-									},
-									"description": {
-										Type:     schema.TypeString,
-										Computed: true,
-									},
-								},
-							},
-						},
+						tagsNames: tagNamesSchemaRead,
+						tagsIds:   tagIdsSchemaRead,
 					},
 				},
 			},
@@ -244,7 +222,8 @@ func dataSourceNetboxDevicesRead(d *schema.ResourceData, m interface{}) error {
 			mapping["status"] = *device.Status.Value
 		}
 		if len(device.Tags) > 0 {
-			mapping["tags"] = flattenTagAttributes(device.Tags)
+			mapping[tagsNames] = getTagListFromNestedTagList(device.Tags)
+			mapping[tagsIds] = getTagIdsListFromNestedTagList(device.Tags)
 		}
 		s = append(s, mapping)
 	}
